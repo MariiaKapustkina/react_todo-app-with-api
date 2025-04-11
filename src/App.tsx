@@ -16,8 +16,10 @@ export const App: React.FC = () => {
   const [todoStatus, setTodoStatus] = useState(FilterStatus.ALL);
   const [tempTodo, setTempTodo] = useState<Todo | null>(null);
   const [inputValue, setInputValue] = useState('');
-  const [loadingTodo, setLoadingTodo] = useState<number[]>([]);
-  const [updateTodo, setUpdateTodo] = useState<number | null>(null);
+  const [loadingTodoIds, setLoadingTodoIds] = useState<number[]>([]);
+  const [updateTodoId, setUpdateTodoId] = useState<number | null>(null);
+
+  const { addTodo, getTodos, deleteTodo, updateTodo } = todoService;
 
   const handleError = useCallback((message: ErrorMessage) => {
     setErrorMessage(message);
@@ -31,21 +33,19 @@ export const App: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
 
-    todoService
-      .getTodos()
+    getTodos()
       .then(setTodos)
       .catch(() => handleError(ErrorMessage.LOAD))
       .finally(() => setIsLoading(false));
-  }, [handleError]);
+  }, [handleError, getTodos]);
 
   const visibleTodos = todos.filter(todo => {
     switch (todoStatus) {
-      case FilterStatus.ALL:
-        return true;
       case FilterStatus.ACTIVE:
         return !todo.completed;
       case FilterStatus.COMPLETED:
         return todo.completed;
+      case FilterStatus.ALL:
       default:
         return true;
     }
@@ -66,10 +66,11 @@ export const App: React.FC = () => {
       }
 
       setTempTodo({ id, title, completed, userId });
-      (inputRef.current as HTMLInputElement).disabled = true;
+      if (inputRef.current) {
+        inputRef.current.disabled = true;
+      }
 
-      todoService
-        .addTodo({ title, completed, userId })
+      addTodo({ title, completed, userId })
         .then(newTodo => {
           setTodos(currentTodos => [...currentTodos, newTodo]);
           setTempTodo(null);
@@ -84,14 +85,13 @@ export const App: React.FC = () => {
           inputRef.current?.focus();
         });
     },
-    [handleError, inputValue],
+    [handleError, inputValue, addTodo],
   );
 
   const handleDeleteTodo = useCallback(
     (todoId: number) => {
-      setLoadingTodo(prev => [...prev, todoId]);
-      todoService
-        .deleteTodo(todoId)
+      setLoadingTodoIds(prev => [...prev, todoId]);
+      deleteTodo(todoId)
         .then(() => {
           const filteredTodos = todos.filter(todo => todo.id !== todoId);
 
@@ -103,10 +103,10 @@ export const App: React.FC = () => {
           inputRef.current?.focus();
         })
         .finally(() =>
-          setLoadingTodo(prev => prev.filter(id => id !== todoId)),
+          setLoadingTodoIds(prev => prev.filter(id => id !== todoId)),
         );
     },
-    [handleError, todos],
+    [handleError, todos, deleteTodo],
   );
 
   const handleDeleteCompletedTodo = useCallback(() => {
@@ -118,11 +118,10 @@ export const App: React.FC = () => {
 
     const idsDelete = completedTodo.map(todo => todo.id);
 
-    setLoadingTodo(idsDelete);
+    setLoadingTodoIds(idsDelete);
 
     completedTodo.forEach(todo =>
-      todoService
-        .deleteTodo(todo.id)
+      deleteTodo(todo.id)
         .then(() => {
           setTodos(currentTodos =>
             currentTodos.filter(item => item.id !== todo.id),
@@ -134,33 +133,32 @@ export const App: React.FC = () => {
           inputRef.current?.focus();
         })
         .finally(() => {
-          setLoadingTodo([]);
+          setLoadingTodoIds([]);
         }),
     );
-  }, [handleError, todos]);
+  }, [handleError, todos, deleteTodo]);
 
   const handleUpdateTodo = useCallback(
     (updatedTodo: Todo) => {
-      setLoadingTodo(prev => [...prev, updatedTodo.id]);
-      todoService
-        .updateTodo(updatedTodo)
+      setLoadingTodoIds(prev => [...prev, updatedTodo.id]);
+      updateTodo(updatedTodo)
         .then(() => {
           setTodos(currentTodos => {
             return currentTodos.map(item =>
               item.id === updatedTodo.id ? updatedTodo : item,
             );
           });
-          setUpdateTodo(null);
+          setUpdateTodoId(null);
         })
         .catch(() => {
-          setLoadingTodo(loadingTodo.filter(id => id !== updatedTodo.id));
+          setLoadingTodoIds(loadingTodoIds.filter(id => id !== updatedTodo.id));
           handleError(ErrorMessage.UPDATE);
         })
         .finally(() => {
-          setLoadingTodo(ids => ids.filter(id => id !== updatedTodo.id));
+          setLoadingTodoIds(ids => ids.filter(id => id !== updatedTodo.id));
         });
     },
-    [handleError, loadingTodo],
+    [handleError, loadingTodoIds, updateTodo],
   );
 
   const handleChangeTodos = useCallback(() => {
@@ -173,25 +171,25 @@ export const App: React.FC = () => {
       return;
     }
 
-    setLoadingTodo(todosToUpdate.map(todo => todo.id));
+    setLoadingTodoIds(todosToUpdate.map(todo => todo.id));
 
     Promise.all(
       todosToUpdate.map(todo =>
-        todoService.updateTodo({ ...todo, completed: !areAllCompleted }),
+        updateTodo({ ...todo, completed: !areAllCompleted }),
       ),
     )
       .then(updatedTodos => {
         setTodos(currentTodos =>
           currentTodos.map(todo => {
-            const updated = updatedTodos.find(t => t.id === todo.id);
+            const updated = updatedTodos.find(item => item.id === todo.id);
 
             return updated || todo;
           }),
         );
       })
       .catch(() => handleError(ErrorMessage.UPDATE))
-      .finally(() => setLoadingTodo([]));
-  }, [todos, handleError]);
+      .finally(() => setLoadingTodoIds([]));
+  }, [todos, handleError, updateTodo]);
 
   return (
     <div className="todoapp">
@@ -213,10 +211,10 @@ export const App: React.FC = () => {
               <TodoList
                 visibleTodos={visibleTodos}
                 handleDeleteTodo={handleDeleteTodo}
-                loadingTodo={loadingTodo}
+                loadingTodoIds={loadingTodoIds}
                 handleUpdateTodo={handleUpdateTodo}
-                updateTodo={updateTodo}
-                setUpdateTodo={setUpdateTodo}
+                updateTodoId={updateTodoId}
+                setUpdateTodoId={setUpdateTodoId}
                 tempTodo={tempTodo}
                 inputRef={inputRef}
               />

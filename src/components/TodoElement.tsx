@@ -8,9 +8,9 @@ type Props = {
   todo: Todo;
   handleDeleteTodo: (id: number) => void;
   handleUpdateTodo: (todo: Todo) => void;
-  loadingTodo: number[];
-  updateTodo: number | null;
-  setUpdateTodo: (value: number | null) => void;
+  loadingTodoIds: number[];
+  updateTodoId: number | null;
+  setUpdateTodoId: (value: number | null) => void;
   inputRef: React.RefObject<HTMLInputElement>;
 };
 
@@ -18,13 +18,13 @@ export const TodoElement: React.FC<Props> = ({
   todo,
   handleDeleteTodo,
   handleUpdateTodo,
-  loadingTodo,
-  updateTodo,
-  setUpdateTodo,
+  loadingTodoIds,
+  updateTodoId,
+  setUpdateTodoId,
   inputRef,
 }: Props) => {
   const [newTitle, setNewTitle] = useState(todo.title);
-  const editTodo = updateTodo === todo.id;
+  const editTodo = updateTodoId === todo.id;
 
   useEffect(() => {
     if (editTodo && inputRef.current) {
@@ -33,7 +33,7 @@ export const TodoElement: React.FC<Props> = ({
   }, [editTodo, inputRef]);
 
   const handleDoubleClick = () => {
-    setUpdateTodo(todo.id);
+    setUpdateTodoId(todo.id);
     setNewTitle(todo.title);
   };
 
@@ -41,7 +41,7 @@ export const TodoElement: React.FC<Props> = ({
     const normalizedTitle = newTitle.trim();
 
     if (normalizedTitle === todo.title) {
-      setUpdateTodo(null);
+      setUpdateTodoId(null);
 
       return;
     }
@@ -56,7 +56,7 @@ export const TodoElement: React.FC<Props> = ({
       ...todo,
       title: normalizedTitle,
     });
-  }, [newTitle, todo, handleUpdateTodo, handleDeleteTodo, setUpdateTodo]);
+  }, [newTitle, todo, handleUpdateTodo, handleDeleteTodo, setUpdateTodoId]);
 
   const handleOnBlur = () => {
     changeSave();
@@ -69,7 +69,7 @@ export const TodoElement: React.FC<Props> = ({
 
   const handleKeyUp = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
-      setUpdateTodo(null);
+      setUpdateTodoId(null);
     }
   };
 
@@ -119,7 +119,7 @@ export const TodoElement: React.FC<Props> = ({
         </span>
       )}
 
-      {!updateTodo && (
+      {!updateTodoId && (
         <button
           type="button"
           className="todo__remove"
@@ -133,7 +133,7 @@ export const TodoElement: React.FC<Props> = ({
       <div
         data-cy="TodoLoader"
         className={classNames('modal overlay', {
-          'is-active': loadingTodo.includes(todo.id),
+          'is-active': loadingTodoIds.includes(todo.id),
         })}
       >
         <div className="modal-background has-background-white-ter" />

@@ -5,10 +5,10 @@ import { TodoElement } from './TodoElement';
 type Props = {
   visibleTodos: Todo[];
   handleDeleteTodo: (id: number) => void;
-  loadingTodo: number[];
+  loadingTodoIds: number[];
   handleUpdateTodo: (todo: Todo) => void;
-  updateTodo: number | null;
-  setUpdateTodo: (value: number | null) => void;
+  updateTodoId: number | null;
+  setUpdateTodoId: (value: number | null) => void;
   tempTodo: Todo | null;
   inputRef: React.RefObject<HTMLInputElement>;
 };
@@ -18,10 +18,10 @@ export const TodoList: React.FC<Props> = React.memo(
   ({
     visibleTodos,
     handleDeleteTodo,
-    loadingTodo,
+    loadingTodoIds,
     handleUpdateTodo,
-    updateTodo,
-    setUpdateTodo,
+    updateTodoId,
+    setUpdateTodoId,
     tempTodo,
     inputRef,
   }: Props) => {
@@ -32,10 +32,10 @@ export const TodoList: React.FC<Props> = React.memo(
             todo={todo}
             key={todo.id}
             handleDeleteTodo={handleDeleteTodo}
-            loadingTodo={loadingTodo}
+            loadingTodoIds={loadingTodoIds}
             handleUpdateTodo={handleUpdateTodo}
-            updateTodo={updateTodo}
-            setUpdateTodo={setUpdateTodo}
+            updateTodoId={updateTodoId}
+            setUpdateTodoId={setUpdateTodoId}
             inputRef={inputRef}
           />
         ))}
@@ -44,10 +44,10 @@ export const TodoList: React.FC<Props> = React.memo(
             key={tempTodo.id}
             todo={tempTodo}
             handleDeleteTodo={() => {}}
-            loadingTodo={[0]}
+            loadingTodoIds={[0]}
             handleUpdateTodo={() => {}}
-            updateTodo={null}
-            setUpdateTodo={() => {}}
+            updateTodoId={null}
+            setUpdateTodoId={() => {}}
             inputRef={inputRef}
           />
         )}
